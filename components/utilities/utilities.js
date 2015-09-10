@@ -1,6 +1,6 @@
 ///////////////////////
-// utilities: addHtmlToElement, addRssToElement, addJsonContentToElement, languageCode, goToSearchPage, getQueryStringParameterByName, copyrightYear - deprecated: htmlToPdf, linkToSitemap
-// version 1.0
+// utilities: addHtmlToElement, addRssToElement, addJsonContentToElement, addJsonSingleContentToElement, languageCode, goToSearchPage, getQueryStringParameterByName, copyrightYear - deprecated: htmlToPdf, linkToSitemap
+// version 1.1
 //////////////////////
 var utilities = {
 	addHtmlToElement: function(selector, url,params) {
@@ -80,6 +80,65 @@ var utilities = {
 				$(selector).prepend(content.join(""));
 			} else {
 				$(selector).append(content.join(""));
+			}
+		});
+	},
+	addJsonSingleContentToElement: function(selector, url, params) {
+		var options = $.extend({
+			specified: false, // can be a string with multiple selectors => ".text1|.object2"
+			wrapperClass: "Item",
+			wrapSpecified: false,
+			prepend: false,
+			title: null,
+			rank: 1
+		}, params);
+		$.getJSON(url, function(data){
+			var content= [];
+			var buildElement = function(d, e, p) {
+				var out;
+				//console.log(d);
+				if(p.specified) {
+					var spec = p.specified.split("|");
+					var specContent = [];
+					for (var c = 0; c<spec.length; c++) {
+						var temp = $(d.Content).find(spec[c]);
+						specContent.push(temp[0].outerHTML);
+					}
+					out = specContent.join("");
+					if (p.wrapSpecified) {
+						out = "<div class='"+p.wrapperClass+" " + options.wrapperClass +"1'>" + out +"</div>";
+					}
+				} else {
+					out= "<div class='"+p.wrapperClass+" " + p.wrapperClass +"1'>" + d.Content + "</div>";
+				}
+
+				return out;
+			};
+
+			for( var i=0; i<data.length; i++ ) {
+
+					if(options.title === null && (options.rank - 1) === i) {
+						content = buildElement(data[i], i, {
+							wrapperClass: options.wrapperClass,
+							wrapSpecified: options.wrapSpecified,
+							specified: options.specified
+						});
+
+						break;
+					} else if(options.title !== null && data[i].Title === options.title) {
+						content =  buildElement(data[i], i, {
+							wrapperClass: options.wrapperClass,
+							wrapSpecified: options.wrapSpecified,
+							specified: options.specified
+						});
+						break;
+					}
+			}
+
+			if (options.prepend){
+				$(selector).prepend(content);
+			} else {
+				$(selector).append(content);
 			}
 		});
 	},
