@@ -22,7 +22,7 @@ seven49cms.renderListOfSubcontents = function(pathToParent, params) {
 		listDescriptionClass: "Description",
 		limit: 0
 	}, params);
-	var pageUrl = (pathToParent === undefined) ? "/de/home/seven49nethilfe.htm" : pathToParent,
+	var pageUrl = (pathToParent === undefined) ? "/de/home/home.htm" : pathToParent,
 		pageId = pathToParent.split("/").pop().split(".")[0],
 		lang = pageUrl.substr(1, 2);
 
