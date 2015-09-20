@@ -80,7 +80,7 @@ seven49cms.renderBxContentSlider = function(json, params) {
 		},
 		dataType: "JSON",
 		error: function(jqXHR, exception) {
-			$(options.container).html("<div class='ajaxError'>"+ seven49cms.error(jqXHR, exception) + "</div>");
+			$(options.container).html("<div class='ajaxError'>"+ seven49cms.helper.error(jqXHR, exception) + "</div>");
 		}
 	});
 };
