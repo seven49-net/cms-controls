@@ -1,6 +1,6 @@
 ///////////////////////
 // utilities: addHtmlToElement, addRssToElement, addJsonContentToElement, addJsonSingleContentToElement, languageCode, goToSearchPage, getQueryStringParameterByName, copyrightYear - deprecated: htmlToPdf, linkToSitemap
-// version 1.1
+// version 1.2
 //////////////////////
 var utilities = {
 	addHtmlToElement: function(selector, url,params) {
@@ -50,33 +50,40 @@ var utilities = {
 		});
 	},
 	addJsonContentToElement: function(selector, url, params) {
+
 		var options = $.extend({
 			specified: false, // can be a string with multiple selectors => ".text1|.object2"
 			wrapperClass: "Item",
 			wrapSpecified: false,
-			prepend: false
+			prepend: false,
+			maincategory: null
 		}, params);
-		$.getJSON(url, function(data){
-			var content= [];
-			for( var i=0; i<data.length; i++ ) {
-				if( data[i].Content != null ) {
-					var cont = "<div class='"+options.wrapperClass+" " + options.wrapperClass + (i+1) +"'>" + data[i].Content + "</div>";
-					if(options.specified) {
-						var spec = options.specified.split("|");
-						var specContent = [];
-						for (var c = 0; c<spec.length; c++) {
-							var temp = $(data[i].Content).find(spec[c]);
-							specContent.push(temp[0].outerHTML);
+
+		$.getJSON(url, function (data) {
+			var content = [];
+			for (var i = 0; i < data.length; i++) {
+				if (data[i].Content != null) {
+					// MainCategories == null: old json, MainCategory undefined or null
+					// $.isEmptyObject(data[i].MainCategories) == true: new json, no MainCategory (empty Object)
+					if (data[i].MainCategories == null || $.isEmptyObject(data[i].MainCategories) || options.maincategory !== null && data[i].MainCategories[options.maincategory]) {
+						var cont = "<div class='" + options.wrapperClass + " " + options.wrapperClass + (i + 1) + "'>" + data[i].Content + "</div>";
+						if (options.specified) {
+							var spec = options.specified.split("|");
+							var specContent = [];
+							for (var c = 0; c < spec.length; c++) {
+								var temp = $(data[i].Content).find(spec[c]);
+								specContent.push(temp[0].outerHTML);
+							}
+							cont = specContent.join("");
+							if (options.wrapSpecified) {
+								cont = "<div class='" + options.wrapperClass + " " + options.wrapperClass + (i + 1) + "'>" + cont + "</div>";
+							}
 						}
-						cont = specContent.join("");
-						if (options.wrapSpecified) {
-							cont = "<div class='"+options.wrapperClass+" " + options.wrapperClass + (i+1) + "'>" + cont +"</div>";
-						}
+						content.push(cont);
 					}
-					content.push( cont );
 				}
 			}
-			if (options.prepend){
+			if (options.prepend) {
 				$(selector).prepend(content.join(""));
 			} else {
 				$(selector).append(content.join(""));
