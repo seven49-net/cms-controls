@@ -1,14 +1,35 @@
 ///////////////////////
-// seven49cms version 1.0
+// seven49cms version 1.1
 //////////////////////
 
 var seven49cms = seven49cms || {};
 seven49cms = {
 	loader: '<img class="ajaxLoader" src="http://cdn.seven49.net/common/images/loading/ajax-loader-2.gif">',
+	vars: {
+		awsRegion: "eu-west-1"
+	},
 	helper: {
 		messages: {
 			notSupported_de: "Sie verwenden einen veralteten Browser mit Sicherheitsschwachstellen und können nicht alle Funktionen dieser Webseite nutzen.<a href='http://browser-update.org/update-browser.html' target='_blank'>Hier erfahren Sie, wie sie Ihren Browser aktualisieren können.</a>",
 			notSupported_en: "Your browser is out of date. It has known security flaws and may not display all features of this and other websites. <a href='http://browser-update.org/update-browser.html' target='_blank'>Learn how to update your browser</a>"
+		},
+		getLanguageString: function(){
+			var path =	location.pathname.split('/');
+			if (path[1].indexOf('_temp') > -1) {
+				return path[2];
+			} else {
+				return path[1];
+			}
+		},
+		getBucketName: function(){
+			var loc = location.hostname;
+			var out;
+			if (loc.indexOf('.amazonaws.com') > -1) {
+				out = loc.substring(0, loc.indexOf('.s3-website'));
+			} else {
+				out = loc;
+			}
+			return out;
 		},
 		getAndWriteContent: function(params,results) {
 			/*
