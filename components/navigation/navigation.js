@@ -1,6 +1,9 @@
 ///////////////////////
 // navigation method contains all navigation cases found in typical seven49.net websites
-// version 1.0
+// version 1.1
+//////////////////////
+///////////////////////
+// navigation method contains all navigation cases found in typical seven49.net websites
 //////////////////////
 var navigation = {
 	extractLanguage: function(defaultLang){
@@ -341,11 +344,12 @@ var navigation = {
 			urlID: navigation.getUrlID(),
 			container: ".LanguageSelection",
 			currentClass: "selected",
-			noWrap: false
+			noWrap: false,
+			prepend: false
 		}, params);
 		var urlID = options.urlID;
 		var currentLang = navigation.extractLanguage();
-
+		var $container = $(options.container);
 		var currentCat = $(data).find('li.item1.category');
 
 		if ($(data).find('li.item_' +urlID).not('.category').length) {
@@ -372,11 +376,14 @@ var navigation = {
 			}
 			if (out.length > 1) {
 				if (options.noWrap) {
-					$(options.container).append(out.join(""));
+					out = out.join("");
 				} else {
-					out.unshift('<ul>');
-					out.push('</ul>');
-					$(options.container).append(out.join(""));
+					out = '<ul>' + out.join("") + '</ul>';
+				}
+				if (options.prepend) {
+					$container.prepend(out.join(""));
+				} else {
+					$container.append(out.join(""));
 				}
 			}
 
