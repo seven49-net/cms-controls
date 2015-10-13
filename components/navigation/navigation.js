@@ -1,9 +1,6 @@
 ///////////////////////
 // navigation method contains all navigation cases found in typical seven49.net websites
-// version 1.1
-//////////////////////
-///////////////////////
-// navigation method contains all navigation cases found in typical seven49.net websites
+// version 1.2
 //////////////////////
 var navigation = {
 	extractLanguage: function(defaultLang){
@@ -72,6 +69,7 @@ var navigation = {
 			subNavigation: false,
 			subContainer: ".TreeNavigation",
 			subClass: "sub-level",
+			subShowRootParentLink: true,
 			emptyMainContentNav: false,
 			emptyContainerClass: "ContentSubNav",
 			emptySelector: ".ObjectsCountNull",
@@ -135,7 +133,8 @@ var navigation = {
 					navigation.subNavigation(data, {
 						urlID: options.urlID,
 						container: options.subContainer,
-						subClass: options.subClass
+						subClass: options.subClass,
+						showRootParentLink: options.subShowRootParentLink
 					});
 				}
 				if (options.emptyMainContentNav) {
@@ -178,7 +177,8 @@ var navigation = {
 			currentClass: "selected",
 			noSubNavClass: "no-sub-nav",
 			emptyClass: "empty-sub-nav",
-			rootClass: "sub-level"
+			rootClass: "sub-level",
+			showRootParentLink: true
 		}, params);
 		var urlID = options.urlID;
 		// Tree Navigation
@@ -202,7 +202,12 @@ var navigation = {
 			treeNavigation.addClass(options.currentClass).parents().addClass(options.currentClass);
 
 			var rootParent = $(treeData).find('li.category.'+options.currentClass)[0].outerHTML;
+
 			$(options.container).append('<ul class="'+ options.rootClass +'">' + rootParent + '</ul>');
+			if (!options.showRootParentLink) {
+
+				$(options.container).find('li.category.' + options.currentClass + '> a').remove();
+			}
 			//mark all selected li>a as selected
 			$(options.container).find('li.' + options.currentClass).children('a').addClass(options.currentClass);
 
