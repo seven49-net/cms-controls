@@ -386,9 +386,9 @@ var navigation = {
 					out = '<ul>' + out.join("") + '</ul>';
 				}
 				if (options.prepend) {
-					$container.prepend(out.join(""));
+					$container.prepend(out);
 				} else {
-					$container.append(out.join(""));
+					$container.append(out);
 				}
 			}
 
