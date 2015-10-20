@@ -1,7 +1,6 @@
 ///////////////////////
-// seven49cms version 1.1
+// seven49cms version 1.2
 //////////////////////
-
 var seven49cms = seven49cms || {};
 seven49cms = {
 	loader: '<img class="ajaxLoader" src="http://cdn.seven49.net/common/images/loading/ajax-loader-2.gif">',
@@ -63,27 +62,27 @@ seven49cms = {
 						if ($elem.length > 0) {
 							var elemClasses = $elem.attr('class');
 
-							if (elemClasses.indexOf('Text') > -1) {
-								cssClass += 'hasText ';
+							if (elemClasses.toLowerCase().indexOf('text') > -1) {
+								cssClass += 'has-text ';
 								queryContent.push(seven49cms.helper.textExtractor($elem, {
 									characters: params.characters,
 									delimiter: params.delimiter,
 									listDescriptionClass: params.listDescriptionClass
 								}));
-							} else if (elemClasses.indexOf('Image') > -1){
-								cssClass += 'hasImage ';
+							} else if (elemClasses.toLowerCase().indexOf('image') > -1){
+								cssClass += 'has-image ';
 								queryContent.push(seven49cms.helper.imageExtractor($elem, {
 									characters: params.characters,
 									delimiter: params.delimiter,
 									listDescriptionClass: params.listDescriptionClass
 								}));
-							} else if (elemClasses.indexOf('Link') > -1) {
+							} else if (elemClasses.toLowerCase().indexOf('link') > -1) {
 								queryContent.push(seven49cms.helper.linkExtractor($elem));
 							} else {
 								queryContent.push(seven49cms.helper.htmlExtractor($elem));
 							}
 						} else {
-							queryContent.push("<div class='systemMessage'>"+params.errorMessage+"</div>");
+							queryContent.push("<div class='system-message'>"+params.errorMessage+"</div>");
 						}
 					}
 					content.push("<"+params.itemTag + " class='"+ cssClass + "item item"+(params.counter + 1)+"'>");
