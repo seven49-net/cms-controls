@@ -1,6 +1,6 @@
 ///////////////////////
 // navigation method contains all navigation cases found in typical seven49.net websites
-// version 1.2
+// version 2.0
 //////////////////////
 var navigation = {
 	extractLanguage: function(defaultLang){
@@ -9,6 +9,8 @@ var navigation = {
 		var lang;
 		if (path === "/") {
 			lang = defaultLang;
+		} else if (path.indexOf('/_temp/') > -1) {
+			lang = path.substr(7, 2);
 		} else {
 			lang = path.substr(1, 2);
 		}
@@ -30,28 +32,78 @@ var navigation = {
 		var path = location.pathname;
 		return path.split('/').pop().split('.').shift();
 	},
+	testPath: function(p) {
+		var names = ["sitemap.htm", "login-check.htm", "login.htm", "profile.htm"];
+		var test = 0;
+		for (var i = 0, len = names.length; i < len; i++) {
+			if (p.indexOf(names[i]) === -1) {
+				test += 1;
+			}
+		}
+
+		return  (test === names.length) ? true : false;
+
+	},
+	getMainCategory: function() {
+		var path = window.location.pathname;
+		var mainCat = null;
+
+		if (navigation.testPath(path)) {
+
+			var segments = path.split('/');
+			segments.shift();
+
+			if (path.indexOf('/_temp/') > -1) {
+				mainCat = segments[2];
+			} else {
+				mainCat = segments[1];
+			}
+		}
+		return mainCat;
+	},
+	getUrlSegmentsAndLength: function() {
+		var path = window.location.pathname;
+		var segments = null, segLen = 0;
+		if (navigation.testPath(path)) {
+			segments = path.split("/");
+			segments.shift();
+			if (path.indexOf('/_temp/') > -1) {
+				segments = segments.splice(0,2);
+				segLen = segments.length;
+			} else {
+				segments.shift();
+				segLen = segments.length;
+			}
+		}
+		return [segments, segLen];
+	},
 	current: function(params){
 		var options = $.extend({
 			urlID: navigation.getUrlID(),
 			currentClass: "selected",
-			selector1: ".MainNavigation",
-			selector2: ".MainNavigation"
+			container: ".MainNavigation",
+			defaultCategory: ".item1.category"
 		}, params);
 
-		var selectedDropdownItem = $(options.selector1 + " ul li.item_" + options.urlID); // check if we are on a page available in the submenu of the main navigation
-		$(options.selector1).find('.selected').removeClass("selected"); // reset main nav cat li on first level
-		if (selectedDropdownItem.length === 0) {
-			var regex = new RegExp("http://[^/?]+/[^/?]+/([^/?]+)");
-			if (regex.test(location.href)) {
-				var $mainCatName = regex.exec(location.href)[1];
-				$(options.selector1 + " ul li.item_" + $mainCatName).addClass(options.currentClass);
+		var category = navigation.getMainCategory(),
+		segments = navigation.getUrlSegmentsAndLength()[0],
+		segLen = navigation.getUrlSegmentsAndLength()[1];
+
+		if(category !== null) {
+			var $branch = $(options.container).find('.item_' + category);
+			$branch.addClass(options.currentClass);
+			if (segments !== null && segLen >= 2) {
+				for (var i=0,len = segLen -1; i < len; i++){
+					$branch.find('.item_' + segments[i]).addClass(options.currentClass);
+				}
+				$branch.find('.item_' + options.urlID).addClass(options.currentClass);
+			}
+		} else {
+			if (options.defaultCategory !== null) {
+				$(options.container).find(options.defaultCategory).addClass(options.currentClass);
 			}
 		}
-		if (selectedDropdownItem.length > 0) {
-			selectedDropdownItem.parentsUntil(options.selector2).addClass(options.currentClass); // mark main cat as selected
-			selectedDropdownItem.addClass(options.currentClass); // mark current page li as selected
-			selectedDropdownItem.children().addClass(options.currentClass); // mark current page anchor as selected
-		}
+
 	},
 	mainNavigation: function(params) {
 		var options = $.extend({
@@ -69,7 +121,7 @@ var navigation = {
 			subNavigation: false,
 			subContainer: ".TreeNavigation",
 			subClass: "sub-level",
-			subShowRootParentLink: true,
+			subShowMainCategory: true,
 			emptyMainContentNav: false,
 			emptyContainerClass: "ContentSubNav",
 			emptySelector: ".ObjectsCountNull",
@@ -117,8 +169,7 @@ var navigation = {
 				// mark selected
 				navigation.current({
 					urlID: options.urlID,
-					selector1: options.container,
-					selector2: options.container2,
+					container: options.container,
 					currentClass: options.currentClass
 				});
 
@@ -133,8 +184,9 @@ var navigation = {
 					navigation.subNavigation(data, {
 						urlID: options.urlID,
 						container: options.subContainer,
+						currentClass: options.currentClass,
 						subClass: options.subClass,
-						showRootParentLink: options.subShowRootParentLink
+						showMainCategory: options.subShowMainCategory
 					});
 				}
 				if (options.emptyMainContentNav) {
@@ -178,34 +230,39 @@ var navigation = {
 			noSubNavClass: "no-sub-nav",
 			emptyClass: "empty-sub-nav",
 			rootClass: "sub-level",
+			showMainCategory: true,
 			showRootParentLink: true
 		}, params);
 		var urlID = options.urlID;
-		// Tree Navigation
-
 		var treeData = $(data);
-		treeData.find('.selected').removeClass('selected');
 		navigation.removeFirstPageEqualToCategory(treeData);
 
 		var treeNavigation = null;
-		// try to find the element
-		if ($(treeData).find("li.item_" + urlID).not('.category').length) {
-			// page has urlID but is not category (any level)
-			treeNavigation = $(treeData).find("li.item_" + urlID).not('.category');
-			//console.log('item_' + urlID);
-		} else if ($(treeData).find("li.multichild.firstpage_" + urlID).length) {
-			// first page has urlID and category is multichild - otherwise treeNavigation remains null
-			treeNavigation = $(treeData).find("li.multichild.firstpage_" + urlID);
+
+		var category = navigation.getMainCategory();
+
+		if (category !== null && treeData.find('li.item_' + category + ' li').length) {
+			treeNavigation = $(treeData).find('li.category.item_' + category)[0].outerHTML;
 		}
 		if (treeNavigation !== null) {
+			if (options.showMainCategory) {
+				treeNavigation = '<ul class="'+ options.rootClass +'">' + treeNavigation + '</ul>';
+			} else {
+				treeNavigation = $(treeNavigation).children('ul')[0].outerHTML;
+			}
 
-			treeNavigation.addClass(options.currentClass).parents().addClass(options.currentClass);
 
-			var rootParent = $(treeData).find('li.category.'+options.currentClass)[0].outerHTML;
+			$(options.container).append(treeNavigation);
+			// mark selected
+			if ($(options.container).find('.item_' + urlID).length) {
 
-			$(options.container).append('<ul class="'+ options.rootClass +'">' + rootParent + '</ul>');
+				$(options.container).find('.item_' + urlID).addClass(options.currentClass);
+			} else if ($(options.container).find('.firstpage_' + urlID).length) {
+				$(options.container).find('.firstpage_' + urlID).addClass(options.currentClass);
+			}
+			$(options.container).find('.' + options.currentClass ).parents('li').addClass(options.currentClass);
+
 			if (!options.showRootParentLink) {
-
 				$(options.container).find('li.category.' + options.currentClass + '> a').remove();
 			}
 			//mark all selected li>a as selected
@@ -271,8 +328,7 @@ var navigation = {
 		navigation.current({
 			urlID: options.urlID,
 			currentClass: options.currentClass,
-			selector1: options.container,
-			selector2: options.container
+			container: options.container
 		});
 
 		// ope/close logic
@@ -292,57 +348,59 @@ var navigation = {
 		var options = $.extend({
 			urlID: navigation.getUrlID(),
 			container: ".breadcrumbs",
-			prependHome: false
+			prependHome: false,
+			currentClass: "current"
 		}, params);
-		var crumbsData = $(data);
+		var crumbsData = $(data),
+		out = [],
+		urlID =options.urlID,
+		prependHome;
 
-		// remove double element if link text is equal
-		navigation.removeFirstPageEqualToCategory(crumbsData);
-
-		var out = [];
-		var prependHome;
 		if (options.prependHome) {
 			var home = $(crumbsData).find('li.category.item1');
-			prependHome ="<li class='"+$(home).attr('class')+"'><a href='"+$(home).children('a').attr('href')+"'>" + $(home).children('a').text() + "</a></li>";
+			prependHome ="<li class='"+$(home).attr('class')+" crumbs0 crumb home-prepended'><a href='"+$(home).children('a').attr('href')+"'>" + $(home).children('a').text() + "</a></li>";
 		}
-		var crumbsCurrent = $(crumbsData).find('li.item_' + options.urlID);
 
-		if (crumbsCurrent.length === 0) {
-			if ($(crumbsData).find('li.firstpage_' + options.urlID).length) {
-				crumbsCurrent = $(crumbsData).find('li.firstpage_' + options.urlID);
+		var category = navigation.getMainCategory(),
+		path = window.location.pathname,
+		segments = [], segLen = 0;
+		if (navigation.testPath(path)) {
+			segments = path.split("/");
+			segments.shift();
+			if (path.indexOf('/_temp/') > -1) {
+				segments = segments.splice(0,2);
+				segLen = segments.length;
 			} else {
-			crumbsCurrent = null;
+				segments.shift();
+				segLen = segments.length;
 			}
 		}
+		var $crumbs = null;
+		if (category !== null && segLen >= 2) {
+			$crumbs = $(crumbsData).find('.category.item_' + category);
+			if ($crumbs.hasClass('firstpage_' + urlID) && $crumbs.hasClass('item_' + category)) {
+				out.push('<li class="'+$crumbs.attr("class")+' crumbs1 crumb last '+options.currentClass+'"><a href="'+$crumbs.children("a").attr("href")+'">' + $crumbs.children("a").text() + '</a></li>');
+			} else {
+				for (var i = 0, len = segLen -1; i < len; i++) {
+					var $crumb = (i === 0) ? $crumbs : $crumbs.find('.item_' + segments[i]);
+					out.push('<li class="'+$crumb.attr('class')+' crumb crumbs'+(i+1)+'"><a href="'+$crumb.children("a").attr("href")+'">' + $crumb.children("a").text() + '</a></li>');
 
-
-		var levels = 0;
-		if (crumbsCurrent !== null && crumbsCurrent.length) {
-
-			out.push("<li class='current item_" + options.urlID +"'>" + crumbsCurrent.children('a').text() + "</li>");
-			while(crumbsCurrent.parent().length !== 0) {
-				crumbsCurrent = crumbsCurrent.parent();
-				levels += 1;
-				if (levels % 2 === 0) {
-					var classes = crumbsCurrent.attr('class'),
-					href = crumbsCurrent.children().attr('href'),
-					text = crumbsCurrent.children('a').text();
-					out.unshift("<li class='"+classes+"'><a href='"+href+"'>" + text + "</a></li>");
 				}
+				var $last = $crumbs.find('.item_' + urlID);
+				out.push('<li class="'+$last.attr('class')+' last crumb crumbs'+ segLen +' '+options.currentClass+'"><a href="'+$last.children("a").attr("href")+'">' + $last.children("a").text() + '</a></li>');
 			}
 
+			if (options.prependHome) {
+				out.unshift(prependHome);
+			}
+			if (out.length >= 1 && options.prependHome === false || options.prependHome === true) {
+				out.unshift('<ul>');
+				out.push('</ul>');
+			} else {
+				out = [];
+			}
+			$(options.container).append(out.join(""));
 		}
-		if (options.prependHome) {
-			out.unshift(prependHome);
-		}
-		if (out.length > 1 && options.prependHome === false || options.prependHome === true) {
-			out.unshift('<ul>');
-			out.push('</ul>');
-		} else {
-			out = [];
-		}
-		$(options.container).append(out.join(""));
-
 	},
 	languageNavigation: function(data, params) {
 		var options = $.extend({
