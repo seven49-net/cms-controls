@@ -1,6 +1,6 @@
 ///////////////////////
 // utilities: addHtmlToElement, addRssToElement, addJsonContentToElement, addJsonSingleContentToElement, languageCode, goToSearchPage, getQueryStringParameterByName, copyrightYear - deprecated: htmlToPdf, linkToSitemap
-// version 1.2
+// version 1.3
 //////////////////////
 var utilities = {
 	addHtmlToElement: function(selector, url,params) {
@@ -155,6 +155,8 @@ var utilities = {
 		var lang;
 		if (path === "/") {
 			lang = defaultLang;
+		} else if (path.indexOf('/_temp/')){
+			lang = path.substr(7,2);
 		} else {
 			lang = path.substr(1, 2);
 		}
