@@ -22,7 +22,7 @@ $(document).ready(function () {
             async: true
         }).done(function (data) {
             console.log(data);
-            docCookies.setItem("SessionGuid", data.SessionGuid, 86400, "/"); // 24 hours = 86400 seconds 
+            docCookies.setItem("SessionGuid", data.SessionGuid, 7776000, "/"); // 24 hours = 86400 seconds, 90 days = 7776000 seconds 
             console.log("Cookie: " + document.cookie);
             if (data.RedirectUrl == "") {
                 window.location = "/";               
