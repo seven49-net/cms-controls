@@ -1,6 +1,6 @@
 ///////////////////////
 // navigation method contains all navigation cases found in typical seven49.net websites
-// version 2.0
+// version 2.1
 //////////////////////
 var navigation = {
 	extractLanguage: function(defaultLang){
@@ -136,7 +136,11 @@ var navigation = {
 			crumbsContainer: ".breadcrumbs",
 			languageNavigation: false,
 			languageContainer: ".LanguageSelection",
-			languageNoWrap: false
+			languageNoWrap: false,
+			emptyMainContentNavigationExtended: false,
+			emptyMainContentNavigationExtendedFilePath: null,
+			emptyMainContentNavigationExtendedUppercase: false,
+			emptyMainContentNavigationExtendedFileExtension: "jpg"
 		},params);
 
 		var lang = this.extractLanguage(options.defaultLanguage);
@@ -217,6 +221,14 @@ var navigation = {
 						urlID: options.urlID,
 						container: options.languageContainer,
 						noWrap: options.languageNoWrap
+					});
+				}
+
+				if(options.emptyMainContentNavigationExtended) {
+					navigation.emptyMainContentNavigationExtended(data, {
+						filePath: options.emptyMainContentNavigationExtendedFilePath,
+						uppercase: options.emptyMainContentNavigationExtendedUppercase,
+						fileExtension: options.emptyMainContentNavigationExtendedFileExtension
 					});
 				}
 			}
@@ -410,47 +422,47 @@ var navigation = {
 			noWrap: false,
 			prepend: false
 		}, params);
-		var urlID = options.urlID;
-		var currentLang = navigation.extractLanguage();
-		var $container = $(options.container);
-		var currentCat = $(data).find('li.item1.category');
+		var currentLang = navigation.extractLanguage(),
+			$container = $(options.container),
+			currentCat = $(data).find('li.item1.category'),
+			category = navigation.getMainCategory();
 
-		if ($(data).find('li.item_' +urlID).not('.category').length) {
-			currentCat = $(data).find('li.item_' + urlID).parents('.category');
-		} else if ($(data).find('li.firstpage_' +urlID).length) {
-			currentCat = $(data).find('li.firstpage_' +urlID);
+		if (category !== null) {
+			currentCat = $(data).find('.category.item_' + category);
+			$.getJSON( "/sitemap/languages.json", function(jLang) {
+				var out = [];
+
+				for (var i=0, len = jLang.length; i<len; i++) {
+
+
+					var langCode = jLang[i].IsoCode2,
+					langTitle = jLang[i].Title,
+					listItem;
+
+					if (currentLang === langCode) {
+						listItem = "<li class='lang-" + langCode +" " +options.currentClass + "'><a href='" + currentCat.children('a').attr('href') + "'>" + langTitle + "</a></li>";
+					} else {
+
+						listItem = "<li class='lang-" + langCode +"'><a href='" + currentCat.children('a').attr('data-rel-' + langCode) + "'>" +langTitle + "</a></li>";
+					}
+
+					out.push(listItem);
+				}
+				if (out.length > 1) {
+					if (options.noWrap) {
+						out = out.join("");
+					} else {
+						out = '<ul>' + out.join("") + '</ul>';
+					}
+					if (options.prepend) {
+						$container.prepend(out);
+					} else {
+						$container.append(out);
+					}
+				}
+
+			});
 		}
-
-		$.getJSON( "/sitemap/languages.json", function(jLang) {
-			var out = [];
-
-			for (var i=0; i<jLang.length; i++) {
-				var langCode = jLang[i].IsoCode2,
-				langTitle = jLang[i].Title,
-				listItem;
-				if (currentLang === langCode) {
-					listItem = "<li class='lang-" + langCode +" " +options.currentClass + "'><a href='" + currentCat.children('a').attr('href') + "'>" + langTitle + "</a></li>";
-				} else {
-
-					listItem = "<li class='lang-" + langCode +"'><a href='" + currentCat.children('a').attr('data-rel-' + langCode) + "'>" +langTitle + "</a></li>";
-				}
-
-				out.push(listItem);
-			}
-			if (out.length > 1) {
-				if (options.noWrap) {
-					out = out.join("");
-				} else {
-					out = '<ul>' + out.join("") + '</ul>';
-				}
-				if (options.prepend) {
-					$container.prepend(out);
-				} else {
-					$container.append(out);
-				}
-			}
-
-		});
 	},
 	legacyHover: function(selector) {
 		$(selector + ' > ul > li').hover(function(){
@@ -469,12 +481,56 @@ var navigation = {
 		var options = $.extend({
 			urlID: navigation.getUrlID(),
 			containerClass: "ContentSubNav",
-			selector: ".ObjectsCountNull"
+			selector: ".ObjectsCountNull",
+			emptyMainContentNavigation: false,
+			itemClass: "Item"
 		},params);
-		var emptyMainContentDiv = $(options.selector);
-		var urlID = options.urlID;
-		if (emptyMainContentDiv.length > 0 &&  $(data).find("ul li.item_" + urlID + " ul").length > 0) {
-			emptyMainContentDiv.children().after("<div class='" + options.containerClass + "'><ul>" + $(data).find("ul li.item_" + urlID + " ul").html() + "</ul></div>");
+		var category = navigation.getMainCategory();
+		if (category !== null) {
+			var emptyMainContentDiv = $(options.selector);
+			var urlID = options.urlID;
+			if (emptyMainContentDiv.length > 0 && $(data).find(".category.item_"+category+" li.item_" + urlID + " ul").length > 0) {
+				var sitemap = $(data).find(".category.item_"+category+" li.item_" + urlID + " ul");
+				var items = [];
+				sitemap.children('li').each(function(e) {
+					var a = $(this).children('a');
+					items.push('<li class="'+options.itemClass+' '+options.itemClass+(e+1)+'"><a href="'+a.attr('href')+'">'+a.text()+'</a></li>');
+				});
+				emptyMainContentDiv.children().after("<div class='" + options.containerClass + "'><ul>" + items.join('') + "</ul></div>");
+			}
+
+		}
+	},
+	emptyMainContentNavigationExtended: function(data, params) {
+		var options = $.extend({
+			urlID: navigation.getUrlID(),
+			containerClass: "ContentSubNav",
+			selector: ".ObjectsCountNull",
+			filePath: null,
+			uppercase: false,
+			fileExtension: "jpg"
+		}, params);
+		var category = navigation.getMainCategory();
+		if (category !== null && options.filePath !== null) {
+			var emptyMainContentDiv = $(options.selector);
+			var urlID = options.urlID;
+
+			if (emptyMainContentDiv.length > 0 && $(data).find(".category.item_" + category + " li.item_" + urlID + " ul").length > 0) {
+				var items = [],
+					sitemap = $(data).find(".category.item_" + category + " li.item_" + urlID + " ul");
+				sitemap.children('li').each(function(i) {
+					var href = $(this).children('a').attr('href'),
+						title = $(this).children('a').text(),
+						filename = href.split('/').pop().split('.')[0],
+						itemClass = 'item';
+					if (options.uppercase) {
+						filename = filename.toUpperCase();
+						itemClass = 'Item';
+					}
+					items.push("<li class='" + itemClass + " " + itemClass + (i + 1) + "'><a href='" + href + "'><img src='" + options.filePath + filename + "." + options.fileExtension + "' alt='"+title+"' /></a></li>");
+				});
+				emptyMainContentDiv.children().after("<div class='" + options.containerClass + "'><ul>" + items.join("") + "</ul></div>");
+			}
 		}
 	}
 };
