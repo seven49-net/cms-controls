@@ -1,6 +1,9 @@
 ///////////////////////
 // navigation method contains all navigation cases found in typical seven49.net websites
-// version 2.1
+// version 2.2
+//////////////////////
+///////////////////////
+// navigation method contains all navigation cases found in typical seven49.net websites
 //////////////////////
 var navigation = {
 	extractLanguage: function(defaultLang){
@@ -33,7 +36,7 @@ var navigation = {
 		return path.split('/').pop().split('.').shift();
 	},
 	testPath: function(p) {
-		var names = ["sitemap.htm", "login-check.htm", "login.htm", "profile.htm"];
+		var names = ["sitemap.htm", "login-check.htm", "login.htm", "profile.htm", "search.htm"];
 		var test = 0;
 		for (var i = 0, len = names.length; i < len; i++) {
 			if (p.indexOf(names[i]) === -1) {
@@ -111,7 +114,7 @@ var navigation = {
 			container: ".MainNavigation",
 			container2: ".root",
 			defaultLanguage: "de",
-			removeMainFirstEqualItem: true,
+			removeMainFirstEqualItem: false,
 			rootClass: "root",
 			onlyOneSubLevel: false,
 			legacyHover: false,
@@ -427,42 +430,37 @@ var navigation = {
 			currentCat = $(data).find('li.item1.category'),
 			category = navigation.getMainCategory();
 
-		if (category !== null) {
-			currentCat = $(data).find('.category.item_' + category);
-			$.getJSON( "/sitemap/languages.json", function(jLang) {
-				var out = [];
+		$.getJSON( "/sitemap/languages.json", function(jLang) {
+			var out = [];
+			if (category !== null) {
+				currentCat = $(data).find('.category.item_' + category);
+			}
+			for (var i=0, len = jLang.length; i<len; i++) {
+				var langCode = jLang[i].IsoCode2,
+				langTitle = jLang[i].Title,
+				listItem;
+				if (currentLang === langCode) {
+					listItem = "<li class='lang-" + langCode +" " +options.currentClass + "'><a href='" + currentCat.children('a').attr('href') + "'>" + langTitle + "</a></li>";
+				} else {
 
-				for (var i=0, len = jLang.length; i<len; i++) {
-
-
-					var langCode = jLang[i].IsoCode2,
-					langTitle = jLang[i].Title,
-					listItem;
-
-					if (currentLang === langCode) {
-						listItem = "<li class='lang-" + langCode +" " +options.currentClass + "'><a href='" + currentCat.children('a').attr('href') + "'>" + langTitle + "</a></li>";
-					} else {
-
-						listItem = "<li class='lang-" + langCode +"'><a href='" + currentCat.children('a').attr('data-rel-' + langCode) + "'>" +langTitle + "</a></li>";
-					}
-
-					out.push(listItem);
-				}
-				if (out.length > 1) {
-					if (options.noWrap) {
-						out = out.join("");
-					} else {
-						out = '<ul>' + out.join("") + '</ul>';
-					}
-					if (options.prepend) {
-						$container.prepend(out);
-					} else {
-						$container.append(out);
-					}
+					listItem = "<li class='lang-" + langCode +"'><a href='" + currentCat.children('a').attr('data-rel-' + langCode) + "'>" +langTitle + "</a></li>";
 				}
 
-			});
-		}
+				out.push(listItem);
+			}
+			if (out.length > 1) {
+				if (options.noWrap) {
+					out = out.join("");
+				} else {
+					out = '<ul>' + out.join("") + '</ul>';
+				}
+				if (options.prepend) {
+					$container.prepend(out);
+				} else {
+					$container.append(out);
+				}
+			}
+		});
 	},
 	legacyHover: function(selector) {
 		$(selector + ' > ul > li').hover(function(){
