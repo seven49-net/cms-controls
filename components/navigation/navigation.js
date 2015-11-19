@@ -2,9 +2,6 @@
 // navigation method contains all navigation cases found in typical seven49.net websites
 // version 2.2
 //////////////////////
-///////////////////////
-// navigation method contains all navigation cases found in typical seven49.net websites
-//////////////////////
 var navigation = {
 	extractLanguage: function(defaultLang){
 		defaultLang = (defaultLang === undefined || defaultLang === null) ? "de" : defaultLang;
@@ -133,7 +130,7 @@ var navigation = {
 			mobileHideSubLevel: true,
 			mobileCurrentClass: "selected",
 			mobileCustomElements: false,
-			mobilLanguageSelection: false,
+			mobileLanguageSelection: false,
 			mobileLanguagePrepend: true,
 			crumbs: false,
 			crumbsContainer: ".breadcrumbs",
