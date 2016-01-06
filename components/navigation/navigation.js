@@ -1,6 +1,6 @@
 ///////////////////////
 // navigation method contains all navigation cases found in typical seven49.net websites
-// version 2.2
+// version 2.3
 //////////////////////
 var navigation = {
 	extractLanguage: function(defaultLang){
@@ -90,9 +90,10 @@ var navigation = {
 		segLen = navigation.getUrlSegmentsAndLength()[1];
 
 		if(category !== null) {
-			var $branch = $(options.container).find('.item_' + category);
+			var $branch = $(options.container).find('.item_' + category + '.category');
 			$branch.addClass(options.currentClass);
 			if (segments !== null && segLen >= 2) {
+				segments.shift();
 				for (var i=0,len = segLen -1; i < len; i++){
 					$branch.find('.item_' + segments[i]).addClass(options.currentClass);
 				}
