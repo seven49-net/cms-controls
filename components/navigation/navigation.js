@@ -1,6 +1,6 @@
 ///////////////////////
 // navigation method contains all navigation cases found in typical seven49.net websites
-// version 2.3
+// version 2.4
 //////////////////////
 var navigation = {
 	extractLanguage: function(defaultLang){
@@ -396,11 +396,23 @@ var navigation = {
 			} else {
 				for (var i = 0, len = segLen -1; i < len; i++) {
 					var $crumb = (i === 0) ? $crumbs : $crumbs.find('.item_' + segments[i]);
-					out.push('<li class="'+$crumb.attr('class')+' crumb crumbs'+(i+1)+'"><a href="'+$crumb.children("a").attr("href")+'">' + $crumb.children("a").text() + '</a></li>');
+					if (i === 0) {
+						$crumb = $crumbs;
 
+					} else if ($crumbs.find('.item_' + segments[i]).length) {
+						$crumb = $crumbs.find('.item_' + segments[i]);
+					} else {
+						$crumb = null;
+					}
+					if ($crumb !== null) {
+						out.push('<li class="'+$crumb.attr('class')+' crumb crumbs'+(i+1)+'"><a href="'+$crumb.children("a").attr("href")+'">' + $crumb.children("a").text() + '</a></li>');
+					}
 				}
-				var $last = $crumbs.find('.item_' + urlID);
-				out.push('<li class="'+$last.attr('class')+' last crumb crumbs'+ segLen +' '+options.currentClass+'"><a href="'+$last.children("a").attr("href")+'">' + $last.children("a").text() + '</a></li>');
+				var $last = ($crumbs.find('.item_' + urlID).length) ? $crumbs.find('.item_' + urlID) : null;
+				if ($last !== null) {
+					out.push('<li class="'+$last.attr('class')+' last crumb crumbs'+ segLen +' '+options.currentClass+'"><a href="'+$last.children("a").attr("href")+'">' + $last.children("a").text() + '</a></li>');
+				}
+
 			}
 
 			if (options.prependHome) {
