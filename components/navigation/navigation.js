@@ -1,6 +1,5 @@
 ///////////////////////
 // navigation method contains all navigation cases found in typical seven49.net websites
-// version 2.4
 //////////////////////
 var navigation = {
 	extractLanguage: function(defaultLang){
@@ -88,16 +87,17 @@ var navigation = {
 		var category = navigation.getMainCategory(),
 		segments = navigation.getUrlSegmentsAndLength()[0],
 		segLen = navigation.getUrlSegmentsAndLength()[1];
-
+    // console.log(segments + " length: " +segLen);
 		if(category !== null) {
 			var $branch = $(options.container).find('.item_' + category + '.category');
 			$branch.addClass(options.currentClass);
 			if (segments !== null && segLen >= 2) {
 				segments.shift();
 				for (var i=0,len = segLen -1; i < len; i++){
-					$branch.find('.item_' + segments[i]).addClass(options.currentClass);
+          var seg = (i === len -1) ? options.urlID : segments[i];
+          $branch.find('.item_' + seg).addClass(options.currentClass);
 				}
-				$branch.find('.item_' + options.urlID).addClass(options.currentClass);
+
 			}
 		} else {
 			if (options.defaultCategory !== null) {
@@ -114,6 +114,7 @@ var navigation = {
 			defaultLanguage: "de",
 			removeMainFirstEqualItem: false,
 			rootClass: "root",
+      onlyCategories: false,
 			onlyOneSubLevel: false,
 			legacyHover: false,
 			megaPanel: false,
@@ -133,11 +134,14 @@ var navigation = {
 			mobileCustomElements: false,
 			mobileLanguageSelection: false,
 			mobileLanguagePrepend: true,
+      mobileOpen: "+",
+      mobileClose: "-",
 			crumbs: false,
 			crumbsContainer: ".breadcrumbs",
 			languageNavigation: false,
 			languageContainer: ".LanguageSelection",
 			languageNoWrap: false,
+            languageSelectedFirst: false,
 			emptyMainContentNavigationExtended: false,
 			emptyMainContentNavigationExtendedFilePath: null,
 			emptyMainContentNavigationExtendedUppercase: false,
@@ -182,6 +186,10 @@ var navigation = {
 					$(options.container).find('ul ul ul').remove();
 				}
 
+        if (options.onlyCategories) {
+          $(options.container).find('ul ul').remove();
+        }
+
 				if (options.legacyHover) {
 					navigation.legacyHover(options.container);
 				}
@@ -209,7 +217,9 @@ var navigation = {
 						customElements: options.mobileCustomElements,
 						hideSubLevel: options.mobileHideSubLevel,
 						languageSelection: options.mobileLanguageSelection,
-						languagePrepend: options.mobileLanguagePrepend
+						languagePrepend: options.mobileLanguagePrepend,
+            open: options.mobileOpen,
+            close: options.mobileClose
 					});
 				}
 				if (options.crumbs) {
@@ -221,7 +231,8 @@ var navigation = {
 					navigation.languageNavigation(data, {
 						urlID: options.urlID,
 						container: options.languageContainer,
-						noWrap: options.languageNoWrap
+						noWrap: options.languageNoWrap,
+                        selectedFirst: options.languageSelectedFirst
 					});
 				}
 
@@ -248,7 +259,7 @@ var navigation = {
 		}, params);
 		var urlID = options.urlID;
 		var treeData = $(data);
-		navigation.removeFirstPageEqualToCategory(treeData);
+    // navigation.removeFirstPageEqualToCategory(treeData);
 
 		var treeNavigation = null;
 
@@ -266,14 +277,12 @@ var navigation = {
 
 
 			$(options.container).append(treeNavigation);
-			// mark selected
-			if ($(options.container).find('.item_' + urlID).length) {
 
-				$(options.container).find('.item_' + urlID).addClass(options.currentClass);
-			} else if ($(options.container).find('.firstpage_' + urlID).length) {
-				$(options.container).find('.firstpage_' + urlID).addClass(options.currentClass);
-			}
-			$(options.container).find('.' + options.currentClass ).parents('li').addClass(options.currentClass);
+			navigation.current({
+				urlID: urlID,
+				container: options.container,
+				currentClass: options.currentClass
+			});
 
 			if (!options.showRootParentLink) {
 				$(options.container).find('li.category.' + options.currentClass + '> a').remove();
@@ -291,6 +300,8 @@ var navigation = {
 			urlID: navigation.getUrlID(),
 			container: "#mobileMenu",
 			currentClass: "selected",
+      open: "+",
+      close: "-",
 			customElements: false,
 			hideSubLevel: true,
 			languageSelection: false,
@@ -310,11 +321,11 @@ var navigation = {
 		if (options.hideSubLevel) {
 			if (mobileNav.find('li.multichild').length) {
 				mobileNav.find('li.multichild > ul').hide();
-				$('<span class="open-close-button closed">+</span>').insertAfter(mobileNav.find('li.multichild>a'));
+				$('<span class="open-close-button closed">'+options.open+'</span>').insertAfter(mobileNav.find('li.multichild>a'));
 			}
 			if (mobileNav.find('li.parent').length) {
 				mobileNav.find('li.parent > ul').hide();
-				$('<span class="open-close-button closed">+</span>').insertAfter(mobileNav.find('li.parent>a'));
+				$('<span class="open-close-button closed">'+options.open+'</span>').insertAfter(mobileNav.find('li.parent>a'));
 			}
 		}
 
@@ -349,10 +360,10 @@ var navigation = {
 			$(this).siblings('ul').slideToggle();
 			$(this).parent('li').toggleClass('open');
 			if ($(this).hasClass('closed')) {
-				$(this).removeClass('closed').text('-');
+				$(this).removeClass('closed').html(options.close);
 
 			} else {
-				$(this).addClass('closed').text('+');
+				$(this).addClass('closed').html(options.open);
 
 			}
 		});
@@ -433,7 +444,8 @@ var navigation = {
 			container: ".LanguageSelection",
 			currentClass: "selected",
 			noWrap: false,
-			prepend: false
+			prepend: false,
+            selectedFirst: false
 		}, params);
 		var currentLang = navigation.extractLanguage(),
 			$container = $(options.container),
@@ -455,8 +467,12 @@ var navigation = {
 
 					listItem = "<li class='lang-" + langCode +"'><a href='" + currentCat.children('a').attr('data-rel-' + langCode) + "'>" +langTitle + "</a></li>";
 				}
-
-				out.push(listItem);
+                if (options.selectedFirst && currentLang === langCode) {
+                    out.unshift(listItem);
+                } else {
+                    out.push(listItem);
+                }
+				
 			}
 			if (out.length > 1) {
 				if (options.noWrap) {
