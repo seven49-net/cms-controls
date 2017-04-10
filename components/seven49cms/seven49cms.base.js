@@ -1,16 +1,16 @@
 ///////////////////////
-// seven49cms version 1.2
+// seven49cms version 1.3
 //////////////////////
 var seven49cms = seven49cms || {};
 seven49cms = {
-	loader: '<img class="ajaxLoader" src="http://cdn.seven49.net/common/images/loading/ajax-loader-2.gif">',
+	loader: '<img class="ajaxLoader" src="//cdn.seven49.net/common/images/loading/ajax-loader-2.gif">',
 	vars: {
 		awsRegion: "eu-west-1"
 	},
 	helper: {
 		messages: {
-			notSupported_de: "Sie verwenden einen veralteten Browser mit Sicherheitsschwachstellen und können nicht alle Funktionen dieser Webseite nutzen.<a href='http://browser-update.org/update-browser.html' target='_blank'>Hier erfahren Sie, wie sie Ihren Browser aktualisieren können.</a>",
-			notSupported_en: "Your browser is out of date. It has known security flaws and may not display all features of this and other websites. <a href='http://browser-update.org/update-browser.html' target='_blank'>Learn how to update your browser</a>"
+			notSupported_de: "Sie verwenden einen veralteten Browser mit Sicherheitsschwachstellen und können nicht alle Funktionen dieser Webseite nutzen.<a href='//browser-update.org/update-browser.html' target='_blank'>Hier erfahren Sie, wie sie Ihren Browser aktualisieren können.</a>",
+			notSupported_en: "Your browser is out of date. It has known security flaws and may not display all features of this and other websites. <a href='//browser-update.org/update-browser.html' target='_blank'>Learn how to update your browser</a>"
 		},
 		getLanguageString: function(){
 			var path =	location.pathname.split('/');
@@ -47,11 +47,15 @@ seven49cms = {
 				moreLink: false,
 				linkText: "read more",
 				linkTag: "p",
-				linkTo: params.childUrl
+				linkTo: params.childUrl,
+				listContainer: null,
+				listClass: "customListing",
+				imageText: null
+
 			}
 			*/
 			var queries = params.queries.split(',');
-
+			// console.log(params);
 				$.get(params.childUrl, function(data) {
 					var content = [],
 						cssClass ='',
@@ -74,6 +78,7 @@ seven49cms = {
 								queryContent.push(seven49cms.helper.imageExtractor($elem, {
 									characters: params.characters,
 									delimiter: params.delimiter,
+									imageText: params.imageText,
 									listDescriptionClass: params.listDescriptionClass
 								}));
 							} else if (elemClasses.toLowerCase().indexOf('link') > -1) {
@@ -98,15 +103,23 @@ seven49cms = {
 						content.push(seven49cms.helper.moreLink({
 							linkTag: params.linkTag,
 							linkTo: params.childUrl,
-							linkText: params.linkText
+							linkText: params.linkText,
+							moreClass: params.linkClass
 						}));
 					}
 					content.push("</"+params.itemTag + ">");
 					// to ensure the correct order the content will be appended after the last request
 					results[params.counter] = content.join('');
-
+					// console.log('params.limit ' + params.limit + ' params.counter ' + (params.counter + 1));
 					if ((params.counter + 1) === params.total) {
 						setTimeout(function(){
+							if (params.limit > 0) {
+								results = results.slice(0, params.limit);
+							}
+							// if (params.listContainer !== null) {
+// 								results.shift('<' + params.listContainer + ' class="'+params.listClass+'>');
+// 								results.push('</' + params.listContainer + '>');
+// 							}
 							(params.element).append(results.join(''));
 							(params.element).find(params.ajaxLoader).remove();
 						}, 100);
@@ -163,8 +176,10 @@ seven49cms = {
 			*/
 			var out,
 				img = "<div class='Image'>" + $(data).find('.ImageContainer').html() + "</div>",
-				text = $(data).find('.ImageText').length === 0 ? null : $(data).find('.ImageText');
-				if (text !== null) {
+				text = '';
+
+				if (params.imageText !== null && $(data).find('.ImageText').length > 0) {
+					text = $(data).find('.ImageText');
 					text = seven49cms.helper.textExtractor(text,{
 						characters: params.characters,
 						delimiter: params.delimiter,
@@ -187,7 +202,7 @@ seven49cms = {
 
 			return out;
 		},
-		rssContentExtracor: function(data) {
+		rssContentExtractor: function(data) {
 			var out;
 			if ($(data).find('encoded').length) {
 				// console.log($(this).find('encoded'));
